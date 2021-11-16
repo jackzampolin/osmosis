@@ -108,6 +108,9 @@ import (
 	poolincentivesclient "github.com/osmosis-labs/osmosis/x/pool-incentives/client"
 	poolincentiveskeeper "github.com/osmosis-labs/osmosis/x/pool-incentives/keeper"
 	poolincentivestypes "github.com/osmosis-labs/osmosis/x/pool-incentives/types"
+	"github.com/osmosis-labs/osmosis/x/tokenfactory"
+	tokenfactorykeeper "github.com/osmosis-labs/osmosis/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/osmosis-labs/osmosis/x/tokenfactory/types"
 	"github.com/osmosis-labs/osmosis/x/txfees"
 	txfeeskeeper "github.com/osmosis-labs/osmosis/x/txfees/keeper"
 	txfeestypes "github.com/osmosis-labs/osmosis/x/txfees/types"
@@ -149,6 +152,7 @@ var (
 		poolincentives.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -167,6 +171,7 @@ var (
 		lockuptypes.ModuleName:                   {authtypes.Minter, authtypes.Burner},
 		poolincentivestypes.ModuleName:           nil,
 		txfeestypes.ModuleName:                   nil,
+		tokenfactorytypes.ModuleName:             {authtypes.Minter, authtypes.Burner},
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -215,6 +220,7 @@ type OsmosisApp struct {
 	EpochsKeeper         epochskeeper.Keeper
 	PoolIncentivesKeeper poolincentiveskeeper.Keeper
 	TxFeesKeeper         txfeeskeeper.Keeper
+	TokenFactoryKeeper   tokenfactorykeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -257,7 +263,7 @@ func NewOsmosisApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		gammtypes.StoreKey, lockuptypes.StoreKey, claimtypes.StoreKey, incentivestypes.StoreKey,
-		epochstypes.StoreKey, poolincentivestypes.StoreKey, txfeestypes.StoreKey,
+		epochstypes.StoreKey, poolincentivestypes.StoreKey, txfeestypes.StoreKey, tokenfactorytypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -391,6 +397,8 @@ func NewOsmosisApp(
 		authtypes.FeeCollectorName,
 	)
 	poolIncentivesHooks := app.PoolIncentivesKeeper.Hooks()
+
+	app.TokenFactoryKeeper = *tokenfactorykeeper.NewKeeper(appCodec, keys[tokenfactorytypes.StoreKey], app.BankKeeper)
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
